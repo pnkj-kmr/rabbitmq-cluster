@@ -1,13 +1,16 @@
-# RabbitMQ - Clustering - Mirroring - High Availability
+# RabbitMQ Clustering with Mirroring(Replication) - High Availability
 
 _rabbitmq [3.9] | choose higher version if you like_
 
 ## rabbitmq on cluster - these setups help
 
 1. RabbitMQ Installation [skip if already installed]
-2. Hostname Resolution Setup [or we can skip this by IP address]
-3. RabbitMQ Clustering
-4. RabbitMQ Mirroring
+2. Hostname Resolution [or we can skip this by IP address]
+3. RabbitMQ Configuration
+4. RabbitMQ Clustering
+5. RabbitMQ Mirroring
+
+![RabbitMQ](./scripts/rabbit_cluster.png)
 
 ### 1. RabbitMQ Installation
 
@@ -16,76 +19,11 @@ _rabbitmq [3.9] | choose higher version if you like_
 _Here we are refering the linux machine to install rabbitmq. To install [refer here](https://www.rabbitmq.com/install-rpm.html) or below command on terminal to install_
 
 ```
-cat > /etc/yum.repos.d/rabbitmq.repo<<REALEND
-# In /etc/yum.repos.d/rabbitmq.repo
-
-##
-## Zero dependency Erlang
-##
-
-[rabbitmq_erlang]
-name=rabbitmq_erlang
-baseurl=https://packagecloud.io/rabbitmq/erlang/el/8/$basearch
-repo_gpgcheck=1
-gpgcheck=1
-enabled=1
-# PackageCloud's repository key and RabbitMQ package signing key
-gpgkey=https://packagecloud.io/rabbitmq/erlang/gpgkey
-       https://github.com/rabbitmq/signing-keys/releases/download/2.0/rabbitmq-release-signing-key.asc
-sslverify=1
-sslcacert=/etc/pki/tls/certs/ca-bundle.crt
-metadata_expire=300
-
-[rabbitmq_erlang-source]
-name=rabbitmq_erlang-source
-baseurl=https://packagecloud.io/rabbitmq/erlang/el/8/SRPMS
-repo_gpgcheck=1
-gpgcheck=0
-enabled=1
-# PackageCloud's repository key and RabbitMQ package signing key
-gpgkey=https://packagecloud.io/rabbitmq/erlang/gpgkey
-       https://github.com/rabbitmq/signing-keys/releases/download/2.0/rabbitmq-release-signing-key.asc
-sslverify=1
-sslcacert=/etc/pki/tls/certs/ca-bundle.crt
-metadata_expire=300
-
-##
-## RabbitMQ server
-##
-
-[rabbitmq_server]
-name=rabbitmq_server
-baseurl=https://packagecloud.io/rabbitmq/rabbitmq-server/el/8/$basearch
-repo_gpgcheck=1
-gpgcheck=0
-enabled=1
-# PackageCloud's repository key and RabbitMQ package signing key
-gpgkey=https://packagecloud.io/rabbitmq/rabbitmq-server/gpgkey
-       https://github.com/rabbitmq/signing-keys/releases/download/2.0/rabbitmq-release-signing-key.asc
-sslverify=1
-sslcacert=/etc/pki/tls/certs/ca-bundle.crt
-metadata_expire=300
-
-[rabbitmq_server-source]
-name=rabbitmq_server-source
-baseurl=https://packagecloud.io/rabbitmq/rabbitmq-server/el/8/SRPMS
-repo_gpgcheck=1
-gpgcheck=0
-enabled=1
-gpgkey=https://packagecloud.io/rabbitmq/rabbitmq-server/gpgkey
-sslverify=1
-sslcacert=/etc/pki/tls/certs/ca-bundle.crt
-metadata_expire=300
-REALEND
-
-# use if some cache exists
-rm -rf /var/cache/yum/*
-yum clean all
-yum repolist -y
-
-yum -q makecache -y --disablerepo='*' --enablerepo='rabbitmq_erlang' --enablerepo='rabbitmq_server'
-yum install socat logrotate -y
-yum install --repo rabbitmq_erlang --repo rabbitmq_server erlang rabbitmq-server -y
+cd /tmp
+wget https://github.com/rabbitmq/erlang-rpm/releases/download/v24.1.7/erlang-24.1.7-1.el8.x86_64.rpm
+wget https://github.com/rabbitmq/rabbitmq-server/releases/download/v3.9.11/rabbitmq-server-3.9.11-1.el8.noarch.rpm
+rpm -Uvh erlang-24.1.7-1.el8.x86_64.rpm
+rpm -Uvh rabbitmq-server-3.9.11-1.el8.noarch.rpm
 ```
 
 _if linux machine has firewall service running, we need to enable rabbitmq ports by running below command_
@@ -105,7 +43,7 @@ systemctl status rabbitmq-server
 
 _**REPEAT** the step in Each & Every machine_
 
-### 2. Hostname Resolution Setup
+### 2. Hostname Resolution
 
 ---
 
@@ -125,9 +63,31 @@ cat /etc/hosts
 
 _**REPEAT** the step 3 in Each & Every machine_
 
-### 3. RabbitMQ Clustering
+### 3. RabbitMQ Configuration
+
+_To run rabbitmq on cluster mode, we need set below os environment variables properly_
+
+- RABBITMQ_NODENAME=rabbit
+- RABBITMQ_USE_LONGNAME=true
+- RABBITMQ_CONFIG_FILE=/etc/rabbitmq/rabbitmq.conf
+
+_Or else you can use [rabbitmq-env.conf](https://www.rabbitmq.com/configure.html#customise-environment) to set up these variables as_
+
+_[linux]: /etc/rabbitmq/rabbitmq-env.conf_
+
+```
+NODENAME=rabbit
+USE_LONGNAME=true
+CONFIG_FILE=/etc/rabbitmq/rabbitmq.conf
+```
+
+_**REPEAT** the step in Each & Every machine_
+
+### 4. RabbitMQ Clustering
 
 ---
+
+#### 4.1. Clustering configuration
 
 _Here, we are setting up rabbitmq with [clustering](https://www.rabbitmq.com/clustering.html), to start the clustering mode, we need to setup erlang.cookie file_
 
@@ -138,10 +98,6 @@ ADD_YOUR_SECRET_HERE
 ```
 
 _modify the below parameters in rabbitmq.conf file, and restart the rabbitmq service_
-
-<!-- RABBITMQ_CONFIG_FILE= -->
-
-_setup the os environment variable as **RABBITMQ_CONFIG_FILE=etc/rabbitmq/rabbitmq.conf** at linux machine_
 
 _[linux]: /etc/rabbitmq/rabbitmq.conf_
 
@@ -161,9 +117,27 @@ _now, restart the service by running_
 systemctl restart rabbitmq-server
 ```
 
-_**REPEAT** the step in Each & Every machine_
+_**REPEAT** the step 4.1 in Each & Every machine_
 
-### 4. RabbitMQ Mirroring
+#### 4.2. Initializing the Cluster ONCE
+
+_To initiate the clustering mode in rabbitmq once, we need to perform below steps **ONLY in one of rabbitmq**_
+
+_Here, we are choosing rabbit@hostname1 cluster to add other nodes_
+
+_Login to hostname2, need to execute below commands to join cluster rabbit@hostname1_
+
+```
+rabbitmqctl stop_app
+rabbitmqctl reset
+rabbitmqctl join_cluster rabbit@hostname1
+rabbitmqctl start_app
+rabbitmqctl cluster_status
+```
+
+_**REPEAT** the same in hostname3 node_
+
+### 5. RabbitMQ Mirroring (Replication)
 
 ---
 
@@ -193,3 +167,33 @@ _navigate to the path of **docker-compose.yml**, and the command as_
 ```
 docker-compose up --build --force
 ```
+
+_For the first time, we need to form the cluster like linux above._
+
+#### B. How to list users or create user in rabbitmq
+
+_To create new user in rabbitmq, follow below commands_
+
+```
+rabbitmqctl add_user user1 user1123
+rabbitmqctl set_user_tags user1 administrator
+rabbitmqctl set_permissions -p / user1 ".*" ".*" ".*"
+```
+
+_To list users_
+
+```
+rabbitmqctl list_users
+```
+
+_To explore more_
+
+```
+rabbitmqctl --help
+```
+
+#### C. How to connect with rabbitmq cluster
+
+_To connect with cluster, just connect to any of rabbitmq node, rabbitmq broker and exchange will take your routing with queue where it located_
+
+_:)_
