@@ -1,0 +1,60 @@
+version: "3"
+services:
+  rmq1:
+    container_name: "rmq1"
+    image: rabbitmq:3.9-management
+    environment:
+      - RABBITMQ_CONF_ENV_FILE=/etc/rabbitmq/rabbitmq-env.conf
+    ports:
+      - "4369:4369"
+      - "5672:5672"
+      - "15672:15672"
+      - "25672:25672"
+      - "35672:35672"
+    hostname: "hostname1"
+    volumes:
+      - "./conf/rabbit-1:/etc/rabbitmq"
+      - "./data/rabbit-1:/var/lib/rabbitmq"
+      - "./log/rabbit-1:/var/log/rabbitmq"
+    networks:
+      rabbitmq_cluster:
+        ipv4_address: 172.22.0.101
+
+  rmq2:
+    container_name: "rmq2"
+    image: rabbitmq:3.9-management
+    environment:
+      - RABBITMQ_CONF_ENV_FILE=/etc/rabbitmq/rabbitmq-env.conf
+    ports:
+      - "15673:15672"
+    hostname: "hostname2"
+    volumes:
+      - "./conf/rabbit-2:/etc/rabbitmq"
+      - "./data/rabbit-2:/var/lib/rabbitmq"
+      - "./log/rabbit-2:/var/log/rabbitmq"
+    networks:
+      rabbitmq_cluster:
+        ipv4_address: 172.22.0.102
+
+  rmq3:
+    container_name: "rmq3"
+    image: rabbitmq:3.9-management
+    environment:
+      - RABBITMQ_CONF_ENV_FILE=/etc/rabbitmq/rabbitmq-env.conf
+    ports:
+      - "15674:15672"
+    hostname: "hostname3"
+    volumes:
+      - "./conf/rabbit-3:/etc/rabbitmq"
+      - "./data/rabbit-3:/var/lib/rabbitmq"
+      - "./log/rabbit-3:/var/log/rabbitmq"
+    networks:
+      rabbitmq_cluster:
+        ipv4_address: 172.22.0.103
+
+networks:
+  rabbitmq_cluster:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.22.0.0/24

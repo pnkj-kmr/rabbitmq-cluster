@@ -1,0 +1,61 @@
+# RABBITMQ - SETTING UP THE CLUSTER - MANUALLY
+# setting all node into culster mode
+# for more https://www.rabbitmq.com/clustering.html
+
+
+### creating a docker rabbitmq network
+
+docker network create --subnet=172.19.0.0/16 rabbitmq_default
+
+
+
+
+### running the rabbitmq node 1
+
+docker run -d -h node1.rabbit --net rabbitmq_default --ip 172.19.0.11 --add-host node2.rabbit:172.19.0.12 --name rmq1 -p "4369:4369" -p "5672:5672" -p "15672:15672" -p "25672:25672" -p "35672:35672" -v "$(pwd)/data/rabbitmq-1:/var/lib/rabbitmq" rabbitmq:3.9-management
+
+### running the rabbitmq node 2
+
+docker run -d -h node2.rabbit --net rabbitmq_default --ip 172.19.0.12 --name rmq2 --add-host node1.rabbit:172.19.0.11 -p "4370:4369" -p "5673:5672" -p "15673:15672" -p "25673:25672" -p "35673:35672" -v "$(pwd)/data/rabbitmq-2:/var/lib/rabbitmq" rabbitmq:3.9-management
+
+
+
+### validate the erlang.cookie in both nodes
+
+docker exec rmq1 cat /var/lib/rabbitmq/.erlang.cookie
+docker exec rmq2 cat /var/lib/rabbitmq/.erlang.cookie
+
+
+
+### Enabling the plugins - GUI
+docker exec rmq1 rabbitmq-plugins enable rabbitmq_management
+docker exec rmq2 rabbitmq-plugins enable rabbitmq_management
+
+
+### to the cluster status
+
+docker exec rmq1 rabbitmqctl cluster_status
+
+### to join the cluster manually of node 1
+_need to excute the command on node 2_
+
+docker exec -it rmq2 rabbitmqctl stop_app
+docker exec -it rmq2 rabbitmqctl reset
+docker exec -it rmq2 rabbitmqctl join_cluster node1@hostname1
+docker exec -it rmq2 rabbitmqctl start_app
+docker exec -it rmq2 rabbitmqctl cluster_status
+
+
+docker exec -it rmq3 rabbitmqctl stop_app
+docker exec -it rmq3 rabbitmqctl reset
+docker exec -it rmq3 rabbitmqctl join_cluster node1@hostname1
+docker exec -it rmq3 rabbitmqctl start_app
+docker exec -it rmq3 rabbitmqctl cluster_status
+
+
+
+# RABBITMQ - SETTING UP THE MIRRORING - MANUALLY
+# need to run a policy command to mirror all queue in all node
+# for more https://www.rabbitmq.com/ha.html
+docker exec -it rmq1 rabbitmqctl set_policy ha-all ".*" '{"ha-mode":"all"}'
+
