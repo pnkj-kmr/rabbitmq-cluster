@@ -192,7 +192,15 @@ _To explore more_
 rabbitmqctl --help
 ```
 
-#### C. How to connect with rabbitmq cluster
+#### C. How to enable rabbitmq plugin
+
+_To enable plugin_
+
+```
+rabbitmq-plugins enable rabbitmq_management
+```
+
+#### D. How to connect with rabbitmq cluster
 
 _To connect with cluster, just connect to any of rabbitmq node, rabbitmq broker and exchange will take your routing with queue where it located_
 
