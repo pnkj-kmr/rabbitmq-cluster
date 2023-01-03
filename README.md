@@ -76,7 +76,7 @@ _Or else you can use [rabbitmq-env.conf](https://www.rabbitmq.com/configure.html
 _[linux]: /etc/rabbitmq/rabbitmq-env.conf_
 
 ```
-NODENAME=rabbit
+#NODENAME=rabbit
 USE_LONGNAME=true
 CONFIG_FILE=/etc/rabbitmq/rabbitmq.conf
 ```
